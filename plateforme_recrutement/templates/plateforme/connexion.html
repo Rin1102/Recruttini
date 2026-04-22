@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion</title>
+    <link rel="stylesheet" href="{% static 'css/connexion.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2>🔐 Connexion</h2>
+
+        {% if erreur %}
+            <p class="erreur">{{ erreur }}</p>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Se connecter</button>
+        </form>
+
+        <p class="lien">
+            Pas de compte ?
+            <a href="{% url 'inscription' %}">S'inscrire</a>
+        </p>
+    </div>
+</body>
+</html>
