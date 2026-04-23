@@ -12,10 +12,21 @@
 </head>
 <body>
     <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-head">
+                <h2>Espace recruteur</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{% url 'profil_recruteur' %}" class="nav-link active">Mon profil</a>
+                <a href="#" class="nav-link">Mes offres</a>
+                <a href="#" class="nav-link">Suivi des candidature</a>
+            </nav>
+            <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
+        </aside>
+
         <div class="profile-panel">
             <div class="top-bar">
                 <h2>Mon profil</h2>
-                <a class="logout" href="{% url 'deconnexion' %}">Se déconnecter</a>
             </div>
 
             <div class="identity-block">
@@ -43,6 +54,9 @@
                 <div class="section-title">
                     <h3>Modifier mes informations</h3>
                 </div>
+                {% if user_form.non_field_errors %}
+                    <div class="form-error">{{ user_form.non_field_errors }}</div>
+                {% endif %}
 
                 <div class="form-grid">
                     <div class="field-card">{{ user_form.first_name.label_tag }}{{ user_form.first_name }}</div>
@@ -50,6 +64,8 @@
                     <div class="field-card full">{{ user_form.email.label_tag }}{{ user_form.email }}</div>
                     <div class="field-card">{{ recruteur_form.entreprise.label_tag }}{{ recruteur_form.entreprise }}</div>
                     <div class="field-card">{{ recruteur_form.telephone.label_tag }}{{ recruteur_form.telephone }}</div>
+                    <div class="field-card">{{ user_form.new_password.label_tag }}{{ user_form.new_password }}</div>
+                    <div class="field-card">{{ user_form.confirm_password.label_tag }}{{ user_form.confirm_password }}</div>
                 </div>
 
                 <div class="photo-input-hidden">{{ recruteur_form.photo }}</div>
@@ -58,7 +74,7 @@
 
             <form method="POST" class="delete-box" onsubmit="return confirm('Voulez-vous vraiment supprimer votre compte ?');">
                 {% csrf_token %}
-                <button type="submit" name="delete_account" class="delete-btn">Supprimer mon compte</button>
+                <button type="submit" name="delete_account" class="delete-btn">Supprimer mon profil</button>
             </form>
         </div>
     </div>

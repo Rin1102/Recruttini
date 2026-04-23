@@ -22,9 +22,35 @@ class OffreForm(forms.ModelForm):
 
 
 class UserProfileForm(forms.ModelForm):
+    new_password = forms.CharField(
+        label="Nouveau mot de passe",
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+        required=False
+    )
+    confirm_password = forms.CharField(
+        label="Confirmer le mot de passe",
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+        required=False
+    )
+
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get('new_password')
+        confirm_password = cleaned_data.get('confirm_password')
+
+        if new_password or confirm_password:
+            if not new_password or not confirm_password:
+                raise forms.ValidationError("Veuillez remplir les deux champs de mot de passe.")
+            if new_password != confirm_password:
+                raise forms.ValidationError("Les mots de passe ne correspondent pas.")
+            if len(new_password) < 8:
+                raise forms.ValidationError("Le mot de passe doit contenir au moins 8 caractères.")
+
+        return cleaned_data
 
 
 class RecruteurProfileForm(forms.ModelForm):

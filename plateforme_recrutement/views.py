@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .models import Recruteur
@@ -73,7 +74,12 @@ def profil_recruteur(request):
 
     if request.method == 'POST' and 'update_profile' in request.POST:
         if user_form.is_valid() and recruteur_form.is_valid():
-            user_form.save()
+            user = user_form.save()
+            new_password = user_form.cleaned_data.get('new_password')
+            if new_password:
+                user.set_password(new_password)
+                user.save()
+                update_session_auth_hash(request, user)
             recruteur_form.save()
             return redirect('profil_recruteur')
 
