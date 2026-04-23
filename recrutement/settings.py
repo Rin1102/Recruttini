@@ -66,7 +66,7 @@ TEMPLATES = [
         },
     },
 ]
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "plateforme_recrutement" / "Static"]
 
 WSGI_APPLICATION = 'recrutement.wsgi.application'
 
