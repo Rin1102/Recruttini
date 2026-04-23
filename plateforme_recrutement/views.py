@@ -1,8 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from .models import Recruteur
-from .forms import InscriptionForm, ConnexionForm
+from .forms import InscriptionForm, ConnexionForm, UserProfileForm, RecruteurProfileForm
 
 
 def inscription(request):
@@ -33,7 +34,7 @@ def inscription(request):
             )
 
             login(request, user)
-            return redirect('connexion')
+            return redirect('profil_recruteur')
 
     return render(request, 'plateforme/inscription.html', {'form': form, 'erreur': erreur})
 
@@ -51,7 +52,7 @@ def connexion(request):
 
         if user:
             login(request, user)
-            return redirect('liste_offres')
+            return redirect('profil_recruteur')
         else:
             erreur = "Identifiants incorrects."
 
@@ -61,3 +62,27 @@ def connexion(request):
 def deconnexion(request):
     logout(request)
     return redirect('connexion')
+
+
+@login_required
+def profil_recruteur(request):
+    recruteur = get_object_or_404(Recruteur, user=request.user)
+
+    user_form = UserProfileForm(request.POST or None, instance=request.user)
+    recruteur_form = RecruteurProfileForm(request.POST or None, request.FILES or None, instance=recruteur)
+
+    if request.method == 'POST' and 'update_profile' in request.POST:
+        if user_form.is_valid() and recruteur_form.is_valid():
+            user_form.save()
+            recruteur_form.save()
+            return redirect('profil_recruteur')
+
+    if request.method == 'POST' and 'delete_account' in request.POST:
+        request.user.delete()
+        return redirect('connexion')
+
+    return render(request, 'plateforme/profil_recruteur.html', {
+        'user_form': user_form,
+        'recruteur_form': recruteur_form,
+        'recruteur': recruteur,
+    })

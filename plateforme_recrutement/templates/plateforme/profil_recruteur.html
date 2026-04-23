@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon profil recruteur</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/profil_recruteur.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="profile-panel">
+            <div class="top-bar">
+                <h2>Mon profil</h2>
+                <a class="logout" href="{% url 'deconnexion' %}">Se déconnecter</a>
+            </div>
+
+            <div class="identity-block">
+                <div class="avatar-wrap">
+                    {% if recruteur.photo %}
+                        <img src="{{ recruteur.photo.url }}" alt="Photo de profil" class="avatar-photo">
+                    {% else %}
+                        <div class="avatar placeholder">
+                            <span>
+                                {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                                {{ request.user.last_name|default:""|slice:":1"|upper }}
+                            </span>
+                        </div>
+                    {% endif %}
+                    <button type="button" class="photo-hint" id="change-photo-trigger">Changer la photo</button>
+                </div>
+
+                <h3>{{ request.user.first_name }} {{ request.user.last_name }}</h3>
+                <p class="meta">{{ request.user.username }} • {{ recruteur.telephone|default:"Non renseigné" }}</p>
+                <span class="status-pill">Recruteur actif</span>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" class="form-box">
+                {% csrf_token %}
+                <div class="section-title">
+                    <h3>Modifier mes informations</h3>
+                </div>
+
+                <div class="form-grid">
+                    <div class="field-card">{{ user_form.first_name.label_tag }}{{ user_form.first_name }}</div>
+                    <div class="field-card">{{ user_form.last_name.label_tag }}{{ user_form.last_name }}</div>
+                    <div class="field-card full">{{ user_form.email.label_tag }}{{ user_form.email }}</div>
+                    <div class="field-card">{{ recruteur_form.entreprise.label_tag }}{{ recruteur_form.entreprise }}</div>
+                    <div class="field-card">{{ recruteur_form.telephone.label_tag }}{{ recruteur_form.telephone }}</div>
+                </div>
+
+                <div class="photo-input-hidden">{{ recruteur_form.photo }}</div>
+                <button type="submit" name="update_profile">Enregistrer les modifications</button>
+            </form>
+
+            <form method="POST" class="delete-box" onsubmit="return confirm('Voulez-vous vraiment supprimer votre compte ?');">
+                {% csrf_token %}
+                <button type="submit" name="delete_account" class="delete-btn">Supprimer mon compte</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const trigger = document.getElementById("change-photo-trigger");
+            const photoInput = document.getElementById("{{ recruteur_form.photo.id_for_label }}");
+
+            if (!trigger || !photoInput) return;
+            trigger.addEventListener("click", function () {
+                photoInput.click();
+            });
+        })();
+    </script>
+</body>
+</html>

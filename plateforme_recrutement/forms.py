@@ -1,6 +1,6 @@
 from django import forms
-from .models import Recruteur,Offre
 from django.contrib.auth.models import User
+from .models import Recruteur,Offre
 
 class InscriptionForm(forms.Form):
     username = forms.CharField(max_length=100, label="Nom d'utilisateur")
@@ -19,3 +19,15 @@ class OffreForm(forms.ModelForm):
         model = Offre
         fields = ['titre', 'description']
         # ⚠️ pas de champ recruteur, on le récupère via la session
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+
+class RecruteurProfileForm(forms.ModelForm):
+    class Meta:
+        model = Recruteur
+        fields = ['entreprise', 'telephone', 'photo']
