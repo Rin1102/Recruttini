@@ -17,8 +17,41 @@ class ConnexionForm(forms.Form):
 class OffreForm(forms.ModelForm):
     class Meta:
         model = Offre
-        fields = ['titre', 'description']
+        fields = ['titre', 'description', 'lieu', 'type_contrat', 'salaire', 'competences', 'date_limite']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 6}),
+            'competences': forms.Textarea(attrs={'rows': 4}),
+            'date_limite': forms.DateInput(attrs={'type': 'date'}),
+            'salaire': forms.NumberInput(attrs={'type': 'number', 'min': '0'}),
+        }
+        labels = {
+            'titre': 'Titre du poste',
+            'description': 'Description',
+            'lieu': 'Lieu',
+            'type_contrat': 'Type de contrat',
+            'salaire': 'Salaire',
+            'competences': 'Compétences requises',
+            'date_limite': 'Date limite de candidature',
+        }
         # ⚠️ pas de champ recruteur, on le récupère via la session
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['titre'].widget.attrs.update({'placeholder': 'ex: Développeur Django'})
+        self.fields['description'].widget.attrs.update({'placeholder': 'Décrivez les missions et responsabilités du poste...'})
+        self.fields['lieu'].widget.attrs.update({'placeholder': 'ex: Tunis / Remote'})
+        self.fields['salaire'].widget.attrs.update({'placeholder': 'ex: 50000'})
+        self.fields['competences'].widget.attrs.update({'placeholder': 'Python, Django, REST, Git...'})
+
+        self.fields['lieu'].required = True
+        self.fields['type_contrat'].required = True
+        self.fields['competences'].required = True
+
+    def clean_salaire(self):
+        salaire = self.cleaned_data.get('salaire')
+        if salaire is not None and salaire < 0:
+            raise forms.ValidationError("Le salaire ne peut pas être négatif.")
+        return salaire
 
 
 class UserProfileForm(forms.ModelForm):

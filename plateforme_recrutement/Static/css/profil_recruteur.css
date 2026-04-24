@@ -336,6 +336,115 @@ button:hover {
     border-color: #fda4af;
 }
 
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    z-index: 1000;
+    padding: 16px;
+}
+
+.modal.show {
+    display: block;
+}
+
+.modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(460px, 100%);
+    max-height: calc(100vh - 32px);
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 16px 18px;
+    border-bottom: 1px solid #eef2f7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.modal-close {
+    margin-top: 0;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #475569;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 16px 18px 8px;
+}
+
+.modal-body p {
+    margin: 0 0 10px;
+    color: #334155;
+}
+
+.modal-warning {
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+.modal-footer {
+    padding: 14px 18px 18px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-footer .btn-light,
+.modal-footer .btn-delete {
+    width: auto;
+    margin-top: 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.modal-footer .btn-light {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+}
+
+.modal-footer .btn-light:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+}
+
+.modal-footer .btn-delete {
+    border: 1px solid #fecaca;
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.modal-footer .btn-delete:hover {
+    background: #b91c1c;
+    border-color: #fca5a5;
+}
+
 @media (max-width: 720px) {
     body {
         padding: 10px;

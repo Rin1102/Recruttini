@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supprimer l'offre</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/mes_offres.css' %}">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-head">
+                <h2>Espace recruteur</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{% url 'profil_recruteur' %}" class="nav-link">Mon profil</a>
+                <a href="{% url 'mes_offres' %}" class="nav-link active">Mes offres</a>
+                <a href="#" class="nav-link">Suivi des candidature</a>
+            </nav>
+            <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
+        </aside>
+
+        <main class="panel">
+            <div class="confirm-box">
+                <h1>Supprimer cette offre ?</h1>
+                <p>Vous allez supprimer <strong>{{ offre.titre }}</strong>.</p>
+                <p class="danger-text">Cette action est irréversible.</p>
+
+                <form method="post" class="confirm-actions">
+                    {% csrf_token %}
+                    <a href="{% url 'mes_offres' %}" class="btn btn-light">Annuler</a>
+                    <button type="submit" class="btn btn-delete">Oui, supprimer</button>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

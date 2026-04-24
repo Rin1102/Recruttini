@@ -35,9 +35,21 @@ class Candidat(models.Model):
     
 
 class Offre(models.Model):
+    TYPE_CONTRAT_CHOICES = [
+        ('CDI', 'CDI'),
+        ('CDD', 'CDD'),
+        ('Stage', 'Stage'),
+        ('Alternance', 'Alternance'),
+    ]
+
     recruteur=models.ForeignKey(Recruteur,on_delete=models.CASCADE)
     titre=models.CharField(max_length=200)
     description=models.TextField()
+    lieu=models.CharField(max_length=150, default='', blank=True)
+    type_contrat=models.CharField(max_length=20, choices=TYPE_CONTRAT_CHOICES, default='', blank=True)
+    salaire=models.IntegerField(null=True, blank=True)
+    competences=models.TextField(default='', blank=True)
+    date_limite=models.DateField(null=True, blank=True)
     date_publication=models.DateField(auto_now_add=True)
 
     def __str__(self):

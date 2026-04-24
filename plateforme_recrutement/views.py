@@ -3,8 +3,20 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from .models import Recruteur
-from .forms import InscriptionForm, ConnexionForm, UserProfileForm, RecruteurProfileForm
+from django.db.models import Q
+from .models import Recruteur, Offre
+from .forms import InscriptionForm, ConnexionForm, UserProfileForm, RecruteurProfileForm, OffreForm
+import unicodedata
+
+
+def normalize_text(text):
+    """Normalize text by removing accents for case-insensitive, accent-insensitive comparison."""
+    if not text:
+        return ''
+    # Decompose accented characters (é -> e + combining accent)
+    nfkd_form = unicodedata.normalize('NFKD', text)
+    # Filter out combining characters (accents)
+    return ''.join(char for char in nfkd_form if not unicodedata.combining(char)).lower()
 
 
 def inscription(request):
@@ -92,3 +104,72 @@ def profil_recruteur(request):
         'recruteur_form': recruteur_form,
         'recruteur': recruteur,
     })
+
+
+@login_required
+def mes_offres(request):
+    recruteur = get_object_or_404(Recruteur, user=request.user)
+    q = request.GET.get('q', '').strip()
+
+    offres = Offre.objects.filter(recruteur=recruteur).order_by('-date_publication', '-id')
+    
+    if q:
+        # Normalize the search query for accent-insensitive matching
+        normalized_q = normalize_text(q)
+        # Filter in Python to handle accented characters correctly
+        offres = [offre for offre in offres if normalized_q in normalize_text(offre.titre)]
+
+    return render(request, 'plateforme/mes_offres.html', {
+        'recruteur': recruteur,
+        'offres': offres,
+        'q': q,
+        'total_offres': Offre.objects.filter(recruteur=recruteur).count(),
+        'offres_filtrees': len(offres) if q else Offre.objects.filter(recruteur=recruteur).count(),
+    })
+
+
+@login_required
+def creer_offre(request):
+    recruteur = get_object_or_404(Recruteur, user=request.user)
+    form = OffreForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        offre = form.save(commit=False)
+        offre.recruteur = recruteur
+        offre.save()
+        return redirect('mes_offres')
+
+    return render(request, 'plateforme/offre_form.html', {
+        'recruteur': recruteur,
+        'form': form,
+        'offre': None,
+    })
+
+
+@login_required
+def modifier_offre(request, offre_id):
+    recruteur = get_object_or_404(Recruteur, user=request.user)
+    offre = get_object_or_404(Offre, id=offre_id, recruteur=recruteur)
+    form = OffreForm(request.POST or None, instance=offre)
+
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('mes_offres')
+
+    return render(request, 'plateforme/offre_form.html', {
+        'recruteur': recruteur,
+        'form': form,
+        'offre': offre,
+    })
+
+
+@login_required
+def supprimer_offre(request, offre_id):
+    recruteur = get_object_or_404(Recruteur, user=request.user)
+    offre = get_object_or_404(Offre, id=offre_id, recruteur=recruteur)
+
+    if request.method == 'POST':
+        offre.delete()
+        return redirect('mes_offres')
+
+    return redirect('mes_offres')
