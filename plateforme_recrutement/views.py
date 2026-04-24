@@ -81,23 +81,39 @@ def deconnexion(request):
 def profil_recruteur(request):
     recruteur = get_object_or_404(Recruteur, user=request.user)
 
-    user_form = UserProfileForm(request.POST or None, instance=request.user)
-    recruteur_form = RecruteurProfileForm(request.POST or None, request.FILES or None, instance=recruteur)
+    if request.method == 'POST':
 
-    if request.method == 'POST' and 'update_profile' in request.POST:
-        if user_form.is_valid() and recruteur_form.is_valid():
-            user = user_form.save()
-            new_password = user_form.cleaned_data.get('new_password')
-            if new_password:
-                user.set_password(new_password)
+        if 'update_profile' in request.POST:
+            user_form = UserProfileForm(request.POST, instance=request.user)
+            recruteur_form = RecruteurProfileForm(
+                request.POST,
+                request.FILES,
+                instance=recruteur
+            )
+
+            if user_form.is_valid() and recruteur_form.is_valid():
+                user = user_form.save(commit=False)
+
+                new_password = user_form.cleaned_data.get('new_password')
+
+                if new_password:
+                    user.set_password(new_password)
+
                 user.save()
-                update_session_auth_hash(request, user)
-            recruteur_form.save()
-            return redirect('profil_recruteur')
+                recruteur_form.save()
 
-    if request.method == 'POST' and 'delete_account' in request.POST:
-        request.user.delete()
-        return redirect('connexion')
+                if new_password:
+                    update_session_auth_hash(request, user)
+
+                return redirect('profil_recruteur')
+
+        elif 'delete_account' in request.POST:
+            request.user.delete()
+            return redirect('connexion')
+
+    else:
+        user_form = UserProfileForm(instance=request.user)
+        recruteur_form = RecruteurProfileForm(instance=recruteur)
 
     return render(request, 'plateforme/profil_recruteur.html', {
         'user_form': user_form,
@@ -105,7 +121,7 @@ def profil_recruteur(request):
         'recruteur': recruteur,
     })
 
-
+    
 @login_required
 def mes_offres(request):
     recruteur = get_object_or_404(Recruteur, user=request.user)

@@ -8,6 +8,16 @@ body {
         linear-gradient(180deg, #eff6ff 0%, #f8fbff 100%);
     color: #1f2937;
 }
+.locked-field {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
 
 .container {
     width: 100%;
