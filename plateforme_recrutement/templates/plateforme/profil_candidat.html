@@ -1,0 +1,323 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon profil candidat</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/profil_recruteur.css' %}">
+</head>
+
+<body>
+
+    <div id="delete-account-modal" class="modal" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+            <div class="modal-header">
+                <h2 id="delete-account-title">Supprimer mon profil</h2>
+                <button type="button" class="modal-close" id="close-delete-modal" aria-label="Fermer">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <p>Voulez-vous vraiment supprimer votre compte candidat ?</p>
+                <p class="modal-warning">Cette action est irréversible.</p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-light" id="cancel-delete-modal">Annuler</button>
+                <button type="button" class="btn-delete" id="confirm-delete-modal">Oui, supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <aside class="sidebar">
+            <div class="sidebar-head">
+                <h2>Espace candidat</h2>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{% url 'profil_candidat' %}" class="nav-link active">Mon profil</a>
+                <a href="#" class="nav-link">Mes candidatures</a>
+               <a href="{% url 'offres_dispo' %}" class="nav-link">Offres disponibles</a>
+            </nav>
+
+            <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
+        </aside>
+
+        <div class="profile-panel">
+
+            <div class="top-bar">
+                <h2>Mon profil</h2>
+            </div>
+
+            <div class="identity-block">
+                <div class="avatar-wrap">
+
+                    {% if candidat.photo %}
+                        <img src="{{ candidat.photo.url }}" alt="Photo de profil" class="avatar-photo" id="avatar-preview">
+                    {% else %}
+                        <div class="avatar placeholder" id="avatar-placeholder">
+                            <span>
+                                {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                                {{ request.user.last_name|default:""|slice:":1"|upper }}
+                            </span>
+                        </div>
+
+                        <img src="" alt="Photo de profil" class="avatar-photo" id="avatar-preview" style="display: none;">
+                    {% endif %}
+
+                    <button type="button" class="photo-hint" id="change-photo-trigger">
+                        Changer la photo
+                    </button>
+                </div>
+
+                <h3>{{ request.user.first_name }} {{ request.user.last_name }}</h3>
+                <p class="meta">@{{ request.user.username }} • {{ candidat.ville|default:"Ville non renseignée" }}</p>
+                <span class="status-pill">Candidat actif</span>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" class="form-box" id="profile-form">
+                {% csrf_token %}
+
+                <div class="section-title">
+                    <h3>Mes informations</h3>
+                </div>
+
+                {% if user_form.non_field_errors %}
+                    <div class="form-error">{{ user_form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="form-grid">
+
+                    <div class="field-card">
+                        {{ user_form.first_name.label_tag }}
+                        {{ user_form.first_name }}
+                    </div>
+
+                    <div class="field-card">
+                        {{ user_form.last_name.label_tag }}
+                        {{ user_form.last_name }}
+                    </div>
+
+                    <div class="field-card full">
+                        {{ user_form.email.label_tag }}
+                        {{ user_form.email }}
+                    </div>
+
+                    <div class="field-card">
+                        {{ candidat_form.telephone.label_tag }}
+                        {{ candidat_form.telephone }}
+                    </div>
+
+                    <div class="field-card">
+                        {{ candidat_form.date_naissance.label_tag }}
+                        {{ candidat_form.date_naissance }}
+                    </div>
+
+                    <div class="field-card">
+                        {{ candidat_form.ville.label_tag }}
+                        {{ candidat_form.ville }}
+                    </div>
+
+                    <div class="field-card">
+                        {{ candidat_form.pays.label_tag }}
+                        {{ candidat_form.pays }}
+                    </div>
+
+                    <div class="field-card password-field" style="display: none;">
+                        {{ user_form.new_password.label_tag }}
+                        {{ user_form.new_password }}
+                    </div>
+
+                    <div class="field-card password-field" style="display: none;">
+                        {{ user_form.confirm_password.label_tag }}
+                        {{ user_form.confirm_password }}
+                    </div>
+
+                </div>
+
+                <div class="photo-input-hidden">
+                    {{ candidat_form.photo }}
+                </div>
+
+                <div class="profile-actions">
+                    <button type="button" id="edit-profile-btn">
+                        Modifier le profil
+                    </button>
+
+                    <button type="button" id="cancel-edit-btn" style="display: none;">
+                        Annuler
+                    </button>
+
+                    <button type="submit" name="update_profile" id="save-profile-btn" style="display: none;">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+
+            <form method="POST" class="delete-box" id="delete-account-form">
+                {% csrf_token %}
+                <input type="hidden" name="delete_account" value="1">
+
+                <button type="button" id="delete-account-trigger" class="delete-btn">
+                    Supprimer mon profil
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const form = document.getElementById("profile-form");
+            const editBtn = document.getElementById("edit-profile-btn");
+            const saveBtn = document.getElementById("save-profile-btn");
+            const cancelBtn = document.getElementById("cancel-edit-btn");
+            const photoBtn = document.getElementById("change-photo-trigger");
+            const photoInput = document.querySelector(".photo-input-hidden input[type='file']");
+            const passwordFields = document.querySelectorAll(".password-field");
+            const avatarPreview = document.getElementById("avatar-preview");
+            const avatarPlaceholder = document.getElementById("avatar-placeholder");
+
+            if (!form || !editBtn || !saveBtn || !cancelBtn) return;
+
+            const fields = form.querySelectorAll("input:not([type='hidden']), textarea, select");
+
+            function lockFields() {
+                fields.forEach(function (field) {
+                    field.disabled = true;
+                    field.classList.add("locked-field");
+                });
+
+                passwordFields.forEach(function (field) {
+                    field.style.display = "none";
+                });
+
+                if (photoBtn) {
+                    photoBtn.disabled = true;
+                    photoBtn.classList.add("locked-field");
+                }
+
+                editBtn.style.display = "inline-block";
+                saveBtn.style.display = "none";
+                cancelBtn.style.display = "none";
+            }
+
+            function unlockFields() {
+                fields.forEach(function (field) {
+                    field.disabled = false;
+                    field.classList.remove("locked-field");
+                });
+
+                passwordFields.forEach(function (field) {
+                    field.style.display = "";
+                });
+
+                if (photoBtn) {
+                    photoBtn.disabled = false;
+                    photoBtn.classList.remove("locked-field");
+                }
+
+                editBtn.style.display = "none";
+                saveBtn.style.display = "inline-block";
+                cancelBtn.style.display = "inline-block";
+            }
+
+            lockFields();
+
+            editBtn.addEventListener("click", function () {
+                unlockFields();
+            });
+
+            cancelBtn.addEventListener("click", function () {
+                window.location.reload();
+            });
+
+            if (photoBtn && photoInput) {
+                photoBtn.addEventListener("click", function () {
+                    if (!photoBtn.disabled) {
+                        photoInput.click();
+                    }
+                });
+
+                photoInput.addEventListener("change", function () {
+                    const file = photoInput.files[0];
+
+                    if (file) {
+                        const reader = new FileReader();
+
+                        reader.onload = function (event) {
+                            if (avatarPreview) {
+                                avatarPreview.src = event.target.result;
+                                avatarPreview.style.display = "block";
+                            }
+
+                            if (avatarPlaceholder) {
+                                avatarPlaceholder.style.display = "none";
+                            }
+                        };
+
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            form.addEventListener("submit", function () {
+                fields.forEach(function (field) {
+                    field.disabled = false;
+                });
+            });
+        })();
+
+        (function () {
+            const modal = document.getElementById("delete-account-modal");
+            const openBtn = document.getElementById("delete-account-trigger");
+            const closeBtn = document.getElementById("close-delete-modal");
+            const cancelBtn = document.getElementById("cancel-delete-modal");
+            const confirmBtn = document.getElementById("confirm-delete-modal");
+            const deleteForm = document.getElementById("delete-account-form");
+
+            if (!modal || !openBtn || !closeBtn || !cancelBtn || !confirmBtn || !deleteForm) return;
+
+            deleteForm.removeAttribute("onsubmit");
+
+            const openModal = function () {
+                modal.classList.add("show");
+                modal.setAttribute("aria-hidden", "false");
+            };
+
+            const closeModal = function () {
+                modal.classList.remove("show");
+                modal.setAttribute("aria-hidden", "true");
+            };
+
+            openBtn.addEventListener("click", openModal);
+            closeBtn.addEventListener("click", closeModal);
+            cancelBtn.addEventListener("click", closeModal);
+
+            confirmBtn.addEventListener("click", function () {
+                deleteForm.submit();
+            });
+
+            modal.addEventListener("click", function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+
+</body>
+</html>

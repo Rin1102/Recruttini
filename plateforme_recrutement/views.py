@@ -4,8 +4,8 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from .models import Recruteur, Offre
-from .forms import InscriptionForm, ConnexionForm, UserProfileForm, RecruteurProfileForm, OffreForm
+from .models import Recruteur, Offre, Candidat, UserProfil
+from .forms import InscriptionForm, ConnexionForm, UserProfileForm, RecruteurProfileForm, CandidatProfileForm, OffreForm
 import unicodedata
 
 
@@ -18,40 +18,47 @@ def normalize_text(text):
     # Filter out combining characters (accents)
     return ''.join(char for char in nfkd_form if not unicodedata.combining(char)).lower()
 
-
 def inscription(request):
-    form = InscriptionForm(request.POST or None)
-    erreur = None
+    form = InscriptionForm(request.POST or None, request.FILES or None)
 
     if request.method == 'POST' and form.is_valid():
-        username = form.cleaned_data['username']
-        email = form.cleaned_data['email']
+        data = form.cleaned_data
 
-        if User.objects.filter(username=username).exists():
-            erreur = "Ce nom d'utilisateur existe déjà."
-        elif User.objects.filter(email=email).exists():
-            erreur = "Cet email existe déjà."
-        else:
-            user = User.objects.create_user(
-                username=username,
-                password=form.cleaned_data['password'],
-                email=email,
-                first_name=form.cleaned_data['first_name'],
-                last_name=form.cleaned_data['last_name'],
-            )
+        user = User.objects.create_user(
+            username   = data['username'],
+            password   = data['password'],
+            email      = data['email'],
+            first_name = data['first_name'],
+            last_name  = data['last_name'],
+        )
 
+        role = data['role']
+        UserProfil.objects.create(user=user, role=role)
+
+        if role == 'recruteur':
             Recruteur.objects.create(
-                user=user,
-                entreprise=form.cleaned_data['entreprise'],
-                telephone=form.cleaned_data['telephone'],
+                user       = user,
+                entreprise = data['entreprise'],
+                telephone  = data['telephone'],
+                photo      = data.get('photo'),
             )
-
             login(request, user)
             return redirect('profil_recruteur')
 
-    return render(request, 'plateforme/inscription.html', {'form': form, 'erreur': erreur})
+        else:  # candidat
+            Candidat.objects.create(
+                user           = user,
+                date_naissance = data.get('date_naissance'),
+                telephone      = data['telephone'],
+                ville          = data.get('ville'),
+                pays           = data.get('pays'),
+                photo          = data.get('photo'),
+            )
+            login(request, user)
+            return redirect('profil_candidat')
 
-
+    return render(request, 'plateforme/inscription.html', {'form': form})
+ 
 def connexion(request):
     form = ConnexionForm(request.POST or None)
     erreur = None
@@ -64,13 +71,17 @@ def connexion(request):
         )
 
         if user:
+            role = form.cleaned_data['role']
             login(request, user)
-            return redirect('profil_recruteur')
+
+            if role == 'recruteur':
+                return redirect('profil_recruteur')
+            else:
+                return redirect('profil_candidat')
         else:
             erreur = "Identifiants incorrects."
 
     return render(request, 'plateforme/connexion.html', {'form': form, 'erreur': erreur})
-
 
 def deconnexion(request):
     logout(request)
@@ -121,7 +132,7 @@ def profil_recruteur(request):
         'recruteur': recruteur,
     })
 
-    
+
 @login_required
 def mes_offres(request):
     recruteur = get_object_or_404(Recruteur, user=request.user)
@@ -189,3 +200,68 @@ def supprimer_offre(request, offre_id):
         return redirect('mes_offres')
 
     return redirect('mes_offres')
+
+
+@login_required
+def profil_candidat(request):
+    candidat = get_object_or_404(Candidat, user=request.user)
+
+    if request.method == 'POST':
+
+        if 'update_profile' in request.POST:
+            user_form = UserProfileForm(request.POST, instance=request.user)
+            candidat_form = CandidatProfileForm(
+                request.POST,
+                request.FILES,
+                instance=candidat
+            )
+
+            if user_form.is_valid() and candidat_form.is_valid():
+                user = user_form.save(commit=False)
+
+                new_password = user_form.cleaned_data.get('new_password')
+
+                if new_password:
+                    user.set_password(new_password)
+
+                user.save()
+                candidat_form.save()
+
+                if new_password:
+                    update_session_auth_hash(request, user)
+
+                return redirect('profil_candidat')
+
+        elif 'delete_account' in request.POST:
+            request.user.delete()
+            return redirect('connexion')
+
+    else:
+        user_form = UserProfileForm(instance=request.user)
+        candidat_form = CandidatProfileForm(instance=candidat)
+
+    return render(request, 'plateforme/profil_candidat.html', {
+        'user_form': user_form,
+        'candidat_form': candidat_form,
+        'candidat': candidat,
+    })
+@login_required
+def offres_dispo(request):
+    candidat = get_object_or_404(Candidat, user=request.user)
+
+    q = request.GET.get('q', '').strip()
+
+    offres = Offre.objects.select_related('recruteur', 'recruteur__user').all().order_by('-date_publication', '-id')
+
+    if q:
+        offres = offres.filter(
+            Q(titre__icontains=q) |
+            Q(description__icontains=q) |
+            Q(recruteur__entreprise__icontains=q)
+        )
+
+    return render(request, 'plateforme/offres_dispo.html', {
+        'candidat': candidat,
+        'offres': offres,
+        'q': q,
+    })

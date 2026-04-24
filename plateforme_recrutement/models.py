@@ -34,7 +34,7 @@ class Candidat(models.Model):
     telephone=models.CharField(max_length=20,blank=True)
     ville=models.CharField(max_length=100,blank=True)
     pays=models.CharField(max_length=100,blank=True)
-
+    photo=models.ImageField(upload_to='candidats/',blank=True,null=True)  # ← AJOUTER
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} "
 

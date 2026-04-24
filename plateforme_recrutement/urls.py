@@ -11,6 +11,6 @@ urlpatterns = [
     path('offres/nouvelle/', views.creer_offre, name='creer_offre'),
     path('offres/<int:offre_id>/modifier/', views.modifier_offre, name='modifier_offre'),
     path('offres/<int:offre_id>/supprimer/', views.supprimer_offre, name='supprimer_offre'),
-
-   
+   path('profil-candidat/', views.profil_candidat, name='profil_candidat'),
+   path('offres-disponibles/', views.offres_dispo, name='offres_dispo'),
 ]

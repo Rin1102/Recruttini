@@ -7,24 +7,212 @@
     <title>Inscription</title>
     <link rel="stylesheet" href="{% static 'css/inscription.css' %}">
 </head>
-<body>
-    <div class="container">
-        <h2>📋 Inscription Recruteur</h2>
 
-        {% if erreur %}
-            <p class="erreur">{{ erreur }}</p>
+<body>
+<div class="container">
+    <h2>📋 Inscription</h2>
+
+    {% if erreur %}
+        <p class="erreur">{{ erreur }}</p>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+        <p class="erreur">{{ form.non_field_errors }}</p>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- SÉLECTION DE RÔLE -->
+        <div class="form-group field-help" data-help="Choisissez votre type de compte : candidat ou recruteur.">
+            <label class="required-label"><span>*</span> Vous êtes ?</label>
+            <select id="role-value" name="role" onchange="handleRoleChange(this.value)">
+                <option value="candidat">👤 Candidat</option>
+                <option value="recruteur">🏢 Recruteur</option>
+            </select>
+        </div>
+
+        <!-- CHAMPS COMMUNS -->
+        <div class="form-group field-help" data-help="Choisissez un nom d'utilisateur unique pour vous connecter.">
+            <label class="required-label"><span>*</span> Nom d'utilisateur</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+                <p class="field-error">{{ form.username.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="form-group field-help" data-help="Saisissez votre prénom réel.">
+            <label class="required-label"><span>*</span> Prénom</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}
+                <p class="field-error">{{ form.first_name.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="form-group field-help" data-help="Saisissez votre nom de famille.">
+            <label class="required-label"><span>*</span> Nom</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}
+                <p class="field-error">{{ form.last_name.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="form-group field-help" data-help="L'email doit être sous la forme : exemple@gmail.com">
+            <label class="required-label"><span>*</span> Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+                <p class="field-error">{{ form.email.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="form-group field-help" data-help="Le numéro de téléphone est obligatoire. Exemple : 54212712">
+            <label class="required-label"><span>*</span> Téléphone</label>
+            {{ form.telephone }}
+            {% if form.telephone.errors %}
+                <p class="field-error">{{ form.telephone.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- PHOTO SI LE CHAMP EXISTE -->
+        {% if form.photo %}
+        <div class="form-group photo-upload field-help" data-help="Ajoutez une photo claire pour compléter votre profil.">
+            <label>📷 Photo de profil</label>
+
+            <div class="photo-preview-wrapper">
+                <img id="photo-preview" src="#" alt="Aperçu" style="display:none;">
+                <span id="photo-placeholder">Aucune photo sélectionnée</span>
+            </div>
+
+            {{ form.photo }}
+
+            {% if form.photo.errors %}
+                <p class="field-error">{{ form.photo.errors.0 }}</p>
+            {% endif %}
+        </div>
         {% endif %}
 
-        <form method="POST">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Créer mon compte</button>
-        </form>
+        <!-- CHAMPS RECRUTEUR -->
+        <div id="recruteur-fields" style="display:none;">
+            <div class="form-group field-help" data-help="Indiquez le nom de votre entreprise. Ce champ est obligatoire pour un recruteur.">
+                <label class="required-label"><span>*</span> Entreprise</label>
+                {{ form.entreprise }}
+                {% if form.entreprise.errors %}
+                    <p class="field-error">{{ form.entreprise.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
 
-        <p class="lien">
-            Déjà un compte ?
-            <a href="{% url 'connexion' %}">Se connecter</a>
-        </p>
-    </div>
+        <!-- CHAMPS CANDIDAT -->
+        <div id="candidat-fields">
+            <div class="form-group field-help" data-help="Sélectionnez votre date de naissance.">
+                <label>Date de naissance</label>
+                {{ form.date_naissance }}
+                {% if form.date_naissance.errors %}
+                    <p class="field-error">{{ form.date_naissance.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="form-group field-help" data-help="Indiquez votre ville actuelle.">
+                <label>Ville</label>
+                {{ form.ville }}
+                {% if form.ville.errors %}
+                    <p class="field-error">{{ form.ville.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="form-group field-help" data-help="Indiquez votre pays de résidence.">
+                <label>Pays</label>
+                {{ form.pays }}
+                {% if form.pays.errors %}
+                    <p class="field-error">{{ form.pays.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-group field-help" data-help="Le mot de passe doit contenir au moins 8 caractères.">
+            <label class="required-label"><span>*</span> Mot de passe</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+                <p class="field-error">{{ form.password.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <button type="submit">Créer mon compte</button>
+    </form>
+
+    <p class="lien">
+        Déjà un compte ?
+        <a href="{% url 'connexion' %}">Se connecter</a>
+    </p>
+</div>
+
+<script>
+    function handleRoleChange(value) {
+        const candidatFields = document.getElementById("candidat-fields");
+        const recruteurFields = document.getElementById("recruteur-fields");
+
+        if (value === "recruteur") {
+            recruteurFields.style.display = "block";
+            candidatFields.style.display = "none";
+        } else {
+            recruteurFields.style.display = "none";
+            candidatFields.style.display = "block";
+        }
+    }
+
+    // Placeholders automatiques
+    const placeholders = {
+        "id_username": "Ex : mariem123",
+        "id_first_name": "Ex : Mariem",
+        "id_last_name": "Ex : Bchir",
+        "id_email": "Ex : mariem@gmail.com",
+        "id_telephone": "Ex : 54212712",
+        "id_entreprise": "Ex : Tech Solutions",
+        "id_ville": "Ex : Tunis",
+        "id_pays": "Ex : Tunisie",
+        "id_password": "Minimum 8 caractères"
+    };
+
+    Object.keys(placeholders).forEach(function(id) {
+        const input = document.getElementById(id);
+        if (input) {
+            input.setAttribute("placeholder", placeholders[id]);
+        }
+    });
+
+    // Aperçu photo si le champ photo existe
+    const photoInput = document.getElementById("id_photo");
+
+    if (photoInput) {
+        photoInput.addEventListener("change", function () {
+            const file = this.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const preview = document.getElementById("photo-preview");
+                    const placeholder = document.getElementById("photo-placeholder");
+
+                    if (preview && placeholder) {
+                        preview.src = e.target.result;
+                        preview.style.display = "block";
+                        placeholder.style.display = "none";
+                    }
+                };
+
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Ré-afficher le bon panneau si erreur après POST
+    (function () {
+        const select = document.getElementById("role-value");
+        if (select) {
+            handleRoleChange(select.value);
+        }
+    })();
+</script>
 </body>
 </html>

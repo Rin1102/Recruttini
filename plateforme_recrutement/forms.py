@@ -1,18 +1,98 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Recruteur,Offre
+from .models import Recruteur, Offre,Candidat
+import re
 
 class InscriptionForm(forms.Form):
-    username = forms.CharField(max_length=100, label="Nom d'utilisateur")
-    first_name = forms.CharField(max_length=100, label="Prénom")
-    last_name = forms.CharField(max_length=100, label="Nom")
-    email = forms.EmailField(label="Email")
-    entreprise = forms.CharField(max_length=150, label="Entreprise")
-    telephone = forms.CharField(max_length=20, label="Téléphone", required=False)
-    password = forms.CharField(widget=forms.PasswordInput, label="Mot de passe")
+
+    ROLE_CHOICES = [
+        ('candidat', 'Candidat'),
+        ('recruteur', 'Recruteur'),
+    ]
+
+    role          = forms.ChoiceField(choices=ROLE_CHOICES, widget=forms.Select)
+    username      = forms.CharField(max_length=100)
+    first_name    = forms.CharField(max_length=100)
+    last_name     = forms.CharField(max_length=100)
+    email         = forms.EmailField()
+    telephone     = forms.CharField(max_length=20)
+    password      = forms.CharField(widget=forms.PasswordInput)
+    photo         = forms.ImageField(required=False)
+
+    # Recruteur
+    entreprise    = forms.CharField(max_length=150, required=False)
+
+    # Candidat
+    date_naissance = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    ville          = forms.CharField(max_length=100, required=False)
+    pays           = forms.CharField(max_length=100, required=False)
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if len(username) < 3:
+            raise forms.ValidationError("Minimum 3 caractères.")
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("Ce nom d'utilisateur est déjà pris.")
+        return username
+
+    def clean_email(self):                                          # ✅ bien dans la classe
+        email = self.cleaned_data['email'].strip().lower()
+        domaine = email.split('@')[1]
+        if '.' not in domaine:
+            raise forms.ValidationError("Email invalide. Ex : exemple@domain.com")
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Cet email est déjà utilisé.")
+        return email
+
+    def clean_password(self):                                       # ✅ bien dans la classe
+        password = self.cleaned_data['password']
+        if len(password) < 8:
+            raise forms.ValidationError("Minimum 8 caractères.")
+        if not any(c.isupper() for c in password):
+            raise forms.ValidationError("Au moins une majuscule.")
+        if not any(c.isdigit() for c in password):
+            raise forms.ValidationError("Au moins un chiffre.")
+        return password
+
+    def clean_telephone(self):
+        tel = re.sub(r'[\s\-\.\(\)]', '', self.cleaned_data['telephone'])
+        if not re.match(r'^\+?\d{8,15}$', tel):
+            raise forms.ValidationError("Numéro invalide. Ex : 54212712")
+        return tel
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get('photo')
+        if photo:
+            if photo.size > 2 * 1024 * 1024:
+                raise forms.ValidationError("Max 2 Mo.")
+            if photo.content_type not in ['image/jpeg', 'image/png', 'image/webp']:
+                raise forms.ValidationError("JPG, PNG ou WEBP uniquement.")
+        return photo
+
+    def clean(self):
+        cleaned_data = super().clean()
+        role = cleaned_data.get('role')
+        if role == 'recruteur' and not cleaned_data.get('entreprise'):
+            self.add_error('entreprise', "Champ obligatoire pour un recruteur.")
+        return cleaned_data
+
+
 class ConnexionForm(forms.Form):
-    username = forms.CharField(max_length=100, label="Nom d'utilisateur")
-    password = forms.CharField(widget=forms.PasswordInput, label="Mot de passe")
+    role = forms.ChoiceField(
+        choices=[('candidat', 'Candidat'), ('recruteur', 'Recruteur')],
+        widget=forms.Select(attrs={'class': 'form-input'}),
+        label="Vous êtes ?"
+    )
+    username = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-input'}),
+        label="Nom d'utilisateur"
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-input'}),
+        label="Mot de passe"
+    )
+
 
 class OffreForm(forms.ModelForm):
     class Meta:
@@ -33,16 +113,14 @@ class OffreForm(forms.ModelForm):
             'competences': 'Compétences requises',
             'date_limite': 'Date limite de candidature',
         }
-        # ⚠️ pas de champ recruteur, on le récupère via la session
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['titre'].widget.attrs.update({'placeholder': 'ex: Développeur Django'})
-        self.fields['description'].widget.attrs.update({'placeholder': 'Décrivez les missions et responsabilités du poste...'})
+        self.fields['description'].widget.attrs.update({'placeholder': 'Décrivez les missions...'})
         self.fields['lieu'].widget.attrs.update({'placeholder': 'ex: Tunis / Remote'})
         self.fields['salaire'].widget.attrs.update({'placeholder': 'ex: 50000'})
         self.fields['competences'].widget.attrs.update({'placeholder': 'Python, Django, REST, Git...'})
-
         self.fields['lieu'].required = True
         self.fields['type_contrat'].required = True
         self.fields['competences'].required = True
@@ -90,3 +168,10 @@ class RecruteurProfileForm(forms.ModelForm):
     class Meta:
         model = Recruteur
         fields = ['entreprise', 'telephone', 'photo']
+
+
+class CandidatProfileForm(forms.ModelForm):
+    class Meta:
+        model = Candidat
+        fields = ['date_naissance','telephone' ,'ville', 'pays' ,'photo']
+
