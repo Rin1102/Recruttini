@@ -22,6 +22,11 @@ class Recruteur(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}-{self.entreprise}"
+
+    def delete(self, *args, **kwargs):
+        user = self.user
+        super().delete(*args, **kwargs)
+        user.delete()
     
 class Candidat(models.Model):
     user=models.OneToOneField(User,on_delete=models.CASCADE)
@@ -32,6 +37,11 @@ class Candidat(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} "
+
+    def delete(self, *args, **kwargs):
+        user = self.user
+        super().delete(*args, **kwargs)
+        user.delete()
     
 
 class Offre(models.Model):
