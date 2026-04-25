@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if offre %}Modifier l'offre{% else %}Nouvelle offre{% endif %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/mes_offres.css' %}">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-head">
+                <h2>Espace recruteur</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{% url 'profil_recruteur' %}" class="nav-link">Mon profil</a>
+                <a href="{% url 'mes_offres' %}" class="nav-link active">Mes offres</a>
+                <a href="{% url 'suivi_candidatures' %}" class="nav-link">Suivi des candidatures</a>
+                <a href="{% url 'entretiens_recruteur' %}" class="nav-link">Entretiens</a>
+            </nav>
+            <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
+        </aside>
+
+        <main class="panel">
+            <div class="top-bar">
+                <div>
+                    <h1>{% if offre %}Modifier l'offre{% else %}Nouvelle offre{% endif %}</h1>
+                    <p>Renseignez les informations principales de votre offre.</p>
+                </div>
+                <a href="{% url 'mes_offres' %}" class="btn btn-light">← Retour</a>
+            </div>
+
+            <form method="post" class="offer-form-box">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="form-error">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="form-field">
+                    <label for="id_titre">Titre du poste</label>
+                    {{ form.titre }}
+                    {% if form.titre.errors %}
+                        <small class="error-text">{{ form.titre.errors.0 }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="form-field">
+                    <label for="id_description">Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <small class="error-text">{{ form.description.errors.0 }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label for="id_lieu">Lieu</label>
+                        {{ form.lieu }}
+                        {% if form.lieu.errors %}
+                            <small class="error-text">{{ form.lieu.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-field">
+                        <label for="id_type_contrat">Type de contrat</label>
+                        {{ form.type_contrat }}
+                        {% if form.type_contrat.errors %}
+                            <small class="error-text">{{ form.type_contrat.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-field">
+                        <label for="id_salaire">Salaire <span class="field-hint">(optionnel)</span></label>
+                        {{ form.salaire }}
+                        {% if form.salaire.errors %}
+                            <small class="error-text">{{ form.salaire.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-field">
+                        <label for="id_date_limite">Date limite de candidature</label>
+                        {{ form.date_limite }}
+                        {% if form.date_limite.errors %}
+                            <small class="error-text">{{ form.date_limite.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label for="id_competences">Compétences requises</label>
+                    {{ form.competences }}
+                    {% if form.competences.errors %}
+                        <small class="error-text">{{ form.competences.errors.0 }}</small>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-success">{% if offre %}Enregistrer{% else %}Publier{% endif %}</button>
+            </form>
+        </main>
+    </div>
+</body>
+</html>

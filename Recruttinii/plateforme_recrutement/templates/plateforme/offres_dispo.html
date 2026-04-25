@@ -1,0 +1,104 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Offres disponibles</title>
+
+    <link rel="stylesheet" href="{% static 'css/profil_recruteur.css' %}">
+    <link rel="stylesheet" href="{% static 'css/offres_dispo.css' %}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <aside class="sidebar">
+        <div class="sidebar-head">
+            <h2>Espace candidat</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'profil_candidat' %}" class="nav-link">Mon profil</a>
+            <a href="{% url 'offres_dispo' %}" class="nav-link active">Offres disponibles</a>
+            <a href="{% url 'mes_candidatures' %}" class="nav-link">Mes candidatures</a>
+            <a href="{% url 'mes_entretiens_candidat' %}" class="nav-link">Mes entretiens à venir</a>
+        </nav>
+
+        <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
+    </aside>
+
+    <main class="profile-panel">
+
+        <div class="top-bar">
+            <h2>Offres disponibles</h2>
+        </div>
+
+        <div class="offers-header">
+            <div>
+                <h3>Toutes les offres publiées</h3>
+                <p>Consultez les offres enregistrées par les recruteurs.</p>
+            </div>
+
+            <form method="GET" class="search-box">
+                <input 
+                    type="text" 
+                    name="q" 
+                    value="{{ q }}" 
+                    placeholder="Rechercher une offre..."
+                >
+                <button type="submit">Rechercher</button>
+            </form>
+        </div>
+
+        {% if offres %}
+            <div class="offers-grid">
+
+                {% for offre in offres %}
+                    <div class="offer-card">
+
+                        <div class="offer-top">
+                            <div>
+                                <h3>{{ offre.titre }}</h3>
+                                <p class="company-name">
+                                    {{ offre.recruteur.entreprise }}
+                                </p>
+                            </div>
+
+                            <span class="offer-date">
+                                {{ offre.date_publication|date:"d/m/Y" }}
+                            </span>
+                        </div>
+
+                        <p class="offer-description">
+                            {{ offre.description|truncatewords:35 }}
+                        </p>
+
+                        <div class="offer-footer">
+                            <span class="status-pill">Disponible</span>
+                            {% if offre.id in candidatures_en_attente_offres_ids %}
+                                <span class="apply-btn apply-btn-disabled">Candidature en attente</span>
+                            {% else %}
+                                <a href="{% url 'postuler_offre' offre.id %}" class="apply-btn">
+                                    Postuler
+                                </a>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                {% endfor %}
+
+            </div>
+        {% else %}
+            <div class="empty-box">
+                <h3>Aucune offre disponible</h3>
+                <p>Il n’y a pas encore d’offres publiées par les recruteurs.</p>
+            </div>
+        {% endif %}
+
+    </main>
+
+</div>
+
+</body>
+</html>

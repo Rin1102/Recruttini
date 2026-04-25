@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes candidatures</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/profil_recruteur.css' %}">
+    <link rel="stylesheet" href="{% static 'css/candidatures.css' %}">
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div class="sidebar-head">
+            <h2>Espace candidat</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'profil_candidat' %}" class="nav-link">Mon profil</a>
+            <a href="{% url 'offres_dispo' %}" class="nav-link">Offres disponibles</a>
+            <a href="{% url 'mes_candidatures' %}" class="nav-link active">Mes candidatures</a>
+            <a href="{% url 'mes_entretiens_candidat' %}" class="nav-link">Mes entretiens à venir</a>
+        </nav>
+
+        <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
+    </aside>
+
+    <main class="profile-panel">
+        <div class="top-bar">
+            <h2>Mes candidatures</h2>
+        </div>
+
+        <div class="list-wrapper">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            {% if candidatures %}
+                {% for candidature in candidatures %}
+                    <article class="candidature-card">
+                        <div class="card-head">
+                            <div>
+                                <h3>{{ candidature.offre.titre }}</h3>
+                                <p>{{ candidature.offre.recruteur.entreprise }} • {{ candidature.offre.lieu }}</p>
+                            </div>
+                            <span class="status-pill status-{{ candidature.statut }}">{{ candidature.get_statut_display }}</span>
+                        </div>
+
+                        <div class="card-meta">
+                            <span>Soumise le {{ candidature.date_soumission|date:"d/m/Y H:i" }}</span>
+                            {% if candidature.github_link %}
+                                <a href="{{ candidature.github_link }}" target="_blank" rel="noopener">GitHub</a>
+                            {% endif %}
+                            <a href="{{ candidature.cv.url }}" target="_blank" rel="noopener">Voir CV</a>
+                        </div>
+
+                        {% if candidature.statut == 'acceptee' and candidature.entretien_date and candidature.entretien_heure and candidature.entretien_lieu and candidature.entretien_message %}
+                            <div class="congrats-banner">
+                                🎉 Félicitations ! Votre candidature a été acceptée.
+                            </div>
+                        {% elif candidature.statut == 'rejetee' %}
+                            <div class="rejection-banner">
+                                Candidature rejetée. Vous pouvez repostuler à cette offre.
+                            </div>
+                            <div class="action-row">
+                                <a href="{% url 'postuler_offre' candidature.offre.id %}" class="btn-link">
+                                    Repostuler
+                                </a>
+                            </div>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-box">
+                    <h3>Aucune candidature</h3>
+                    <p>Vous n'avez pas encore postulé à une offre.</p>
+                    <a href="{% url 'offres_dispo' %}" class="btn-link">Voir les offres</a>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+</body>
+</html>
