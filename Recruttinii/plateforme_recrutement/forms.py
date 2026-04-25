@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Recruteur, Offre,Candidat
+from .models import Recruteur, Offre, Candidat, Candidature
 import re
 
 class InscriptionForm(forms.Form):
@@ -174,4 +174,41 @@ class CandidatProfileForm(forms.ModelForm):
     class Meta:
         model = Candidat
         fields = ['date_naissance','telephone' ,'ville', 'pays' ,'photo']
+
+
+class CandidatureForm(forms.ModelForm):
+    class Meta:
+        model = Candidature
+        fields = ['nom', 'prenom', 'telephone', 'ville', 'email', 'github_link', 'cv']
+        widgets = {
+            'nom': forms.TextInput(attrs={'placeholder': 'Nom'}),
+            'prenom': forms.TextInput(attrs={'placeholder': 'Prénom'}),
+            'telephone': forms.TextInput(attrs={'placeholder': 'Numéro de téléphone'}),
+            'ville': forms.TextInput(attrs={'placeholder': 'Ville'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'Email'}),
+            'github_link': forms.URLInput(attrs={'placeholder': 'https://github.com/votre-profil'}),
+        }
+        labels = {
+            'nom': 'Nom',
+            'prenom': 'Prénom',
+            'telephone': 'Téléphone',
+            'ville': 'Ville',
+            'email': 'Email',
+            'github_link': 'Lien GitHub (optionnel)',
+            'cv': 'CV (PDF, DOC, DOCX)',
+        }
+
+    def clean_cv(self):
+        cv = self.cleaned_data.get('cv')
+        if not cv:
+            return cv
+
+        allowed_extensions = ('.pdf', '.doc', '.docx')
+        if not cv.name.lower().endswith(allowed_extensions):
+            raise forms.ValidationError("Le CV doit être en format PDF, DOC ou DOCX.")
+
+        if cv.size > 5 * 1024 * 1024:
+            raise forms.ValidationError("La taille maximale du CV est de 5 Mo.")
+
+        return cv
 

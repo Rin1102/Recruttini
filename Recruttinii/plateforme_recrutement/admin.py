@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import UserProfil, Recruteur, Candidat, Offre
+from .models import UserProfil, Recruteur, Candidat, Offre, Candidature
 
 
 @admin.register(UserProfil)
@@ -28,3 +28,10 @@ class OffreAdmin(admin.ModelAdmin):
 	search_fields = ('titre', 'description', 'lieu', 'recruteur__user__username', 'recruteur__entreprise')
 	list_filter = ('type_contrat', 'date_publication', 'date_limite')
 	date_hierarchy = 'date_publication'
+
+
+@admin.register(Candidature)
+class CandidatureAdmin(admin.ModelAdmin):
+	list_display = ('offre', 'candidat', 'email', 'telephone', 'statut', 'date_soumission')
+	search_fields = ('offre__titre', 'candidat__user__username', 'nom', 'prenom', 'email', 'telephone')
+	list_filter = ('statut', 'date_soumission')

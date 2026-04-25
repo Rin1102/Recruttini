@@ -1,0 +1,164 @@
+.candidature-box {
+    max-width: 900px;
+}
+
+.offer-resume {
+    background: #f8fbff;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+}
+
+.offer-resume h3 {
+    margin: 0;
+    color: #0f172a;
+}
+
+.offer-resume p {
+    margin: 8px 0 0;
+    color: #475569;
+}
+
+.list-wrapper {
+    padding: 20px 26px 26px;
+}
+
+.candidature-card {
+    background: #ffffff;
+    border: 1px solid #e5edf7;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+}
+
+.card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.card-head h3 {
+    margin: 0;
+    color: #0f172a;
+}
+
+.card-head p {
+    margin: 7px 0 0;
+    color: #64748b;
+}
+
+.card-details {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #334155;
+    font-size: 0.95rem;
+}
+
+.card-meta {
+    margin-top: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.card-meta a {
+    text-decoration: none;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.flash-message {
+    margin-bottom: 12px;
+    background: #ecfeff;
+    color: #155e75;
+    border: 1px solid #a5f3fc;
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.action-row {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.action-row button {
+    margin: 0;
+}
+
+.btn-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #1f2937;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-weight: 700;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.btn-accept {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: white;
+}
+
+.btn-accept:hover {
+    background: #15803d;
+    border-color: #15803d;
+}
+
+.btn-reject {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: white;
+}
+
+.btn-reject:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.status-en_attente {
+    background: #fef9c3;
+    color: #854d0e;
+    border-color: #fde68a;
+}
+
+.status-acceptee {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.status-rejetee {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+.inline-errors p {
+    color: #b91c1c;
+    margin: 8px 0 0;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 860px) {
+    .card-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .action-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

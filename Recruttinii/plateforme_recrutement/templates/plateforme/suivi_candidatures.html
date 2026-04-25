@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi des candidatures</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/profil_recruteur.css' %}">
+    <link rel="stylesheet" href="{% static 'css/candidatures.css' %}">
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div class="sidebar-head">
+            <h2>Espace recruteur</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'profil_recruteur' %}" class="nav-link">Mon profil</a>
+            <a href="{% url 'mes_offres' %}" class="nav-link">Mes offres</a>
+            <a href="{% url 'suivi_candidatures' %}" class="nav-link active">Suivi des candidatures</a>
+        </nav>
+
+        <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
+    </aside>
+
+    <main class="profile-panel">
+        <div class="top-bar">
+            <h2>Suivi des candidatures</h2>
+        </div>
+
+        <div class="list-wrapper">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            {% if candidatures %}
+                {% for candidature in candidatures %}
+                    <article class="candidature-card">
+                        <div class="card-head">
+                            <div>
+                                <h3>{{ candidature.offre.titre }}</h3>
+                                <p>{{ candidature.nom }} {{ candidature.prenom }} • {{ candidature.email }}</p>
+                            </div>
+                            <span class="status-pill status-{{ candidature.statut }}">{{ candidature.get_statut_display }}</span>
+                        </div>
+
+                        <div class="card-details">
+                            <span>Téléphone : {{ candidature.telephone }}</span>
+                            <span>Ville : {{ candidature.ville|default:"-" }}</span>
+                            <span>Soumise le : {{ candidature.date_soumission|date:"d/m/Y H:i" }}</span>
+                        </div>
+
+                        <div class="card-meta">
+                            {% if candidature.github_link %}
+                                <a href="{{ candidature.github_link }}" target="_blank" rel="noopener">GitHub du candidat</a>
+                            {% endif %}
+                            <a href="{{ candidature.cv.url }}" target="_blank" rel="noopener">Voir CV</a>
+                        </div>
+
+                        {% if candidature.statut == 'en_attente' %}
+                            <form method="POST" action="{% url 'changer_statut_candidature' candidature.id %}" class="action-row">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="accepter" class="btn-accept">Accepter</button>
+                                <button type="submit" name="action" value="rejeter" class="btn-reject">Rejeter</button>
+                            </form>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-box">
+                    <h3>Aucune candidature reçue</h3>
+                    <p>Les candidatures sur vos offres apparaîtront ici.</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+</body>
+</html>

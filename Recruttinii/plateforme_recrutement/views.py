@@ -1,11 +1,20 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth import update_session_auth_hash
+from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from .models import Recruteur, Offre, Candidat, UserProfil
-from .forms import InscriptionForm, ConnexionForm, UserProfileForm, RecruteurProfileForm, CandidatProfileForm, OffreForm
+from .models import Recruteur, Offre, Candidat, UserProfil, Candidature
+from .forms import (
+    InscriptionForm,
+    ConnexionForm,
+    UserProfileForm,
+    RecruteurProfileForm,
+    CandidatProfileForm,
+    OffreForm,
+    CandidatureForm,
+)
 import unicodedata
 
 
@@ -252,6 +261,7 @@ def offres_dispo(request):
     q = request.GET.get('q', '').strip()
 
     offres = Offre.objects.select_related('recruteur', 'recruteur__user').all().order_by('-date_publication', '-id')
+    candidatures_offres_ids = set(candidat.candidatures.values_list('offre_id', flat=True))
 
     if q:
         offres = offres.filter(
@@ -264,4 +274,95 @@ def offres_dispo(request):
         'candidat': candidat,
         'offres': offres,
         'q': q,
+        'candidatures_offres_ids': candidatures_offres_ids,
     })
+
+
+@login_required
+def postuler_offre(request, offre_id):
+    candidat = get_object_or_404(Candidat, user=request.user)
+    offre = get_object_or_404(Offre.objects.select_related('recruteur'), id=offre_id)
+
+    candidature_existante = Candidature.objects.filter(offre=offre, candidat=candidat).first()
+    if candidature_existante:
+        messages.info(request, "Vous avez déjà postulé à cette offre.")
+        return redirect('mes_candidatures')
+
+    initial_data = {
+        'nom': request.user.last_name,
+        'prenom': request.user.first_name,
+        'telephone': candidat.telephone,
+        'ville': candidat.ville,
+        'email': request.user.email,
+    }
+
+    form = CandidatureForm(request.POST or None, request.FILES or None, initial=initial_data)
+
+    if request.method == 'POST' and form.is_valid():
+        candidature = form.save(commit=False)
+        candidature.offre = offre
+        candidature.candidat = candidat
+        candidature.save()
+        messages.success(request, "Votre candidature a été envoyée avec succès.")
+        return redirect('mes_candidatures')
+
+    return render(request, 'plateforme/candidature_form.html', {
+        'candidat': candidat,
+        'offre': offre,
+        'form': form,
+    })
+
+
+@login_required
+def mes_candidatures(request):
+    candidat = get_object_or_404(Candidat, user=request.user)
+    candidatures = (
+        Candidature.objects
+        .select_related('offre', 'offre__recruteur')
+        .filter(candidat=candidat)
+        .order_by('-date_soumission')
+    )
+
+    return render(request, 'plateforme/mes_candidatures.html', {
+        'candidat': candidat,
+        'candidatures': candidatures,
+    })
+
+
+@login_required
+def suivi_candidatures(request):
+    recruteur = get_object_or_404(Recruteur, user=request.user)
+    candidatures = (
+        Candidature.objects
+        .select_related('offre', 'candidat', 'candidat__user')
+        .filter(offre__recruteur=recruteur)
+        .order_by('-date_soumission')
+    )
+
+    return render(request, 'plateforme/suivi_candidatures.html', {
+        'recruteur': recruteur,
+        'candidatures': candidatures,
+    })
+
+
+@login_required
+def changer_statut_candidature(request, candidature_id):
+    recruteur = get_object_or_404(Recruteur, user=request.user)
+    candidature = get_object_or_404(
+        Candidature,
+        id=candidature_id,
+        offre__recruteur=recruteur,
+    )
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'accepter':
+            candidature.statut = 'acceptee'
+            candidature.save(update_fields=['statut'])
+            messages.success(request, "La candidature a été acceptée.")
+        elif action == 'rejeter':
+            candidature.statut = 'rejetee'
+            candidature.save(update_fields=['statut'])
+            messages.success(request, "La candidature a été rejetée.")
+
+    return redirect('suivi_candidatures')

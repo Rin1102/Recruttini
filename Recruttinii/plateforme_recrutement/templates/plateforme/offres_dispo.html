@@ -20,7 +20,7 @@
 
         <nav class="sidebar-nav">
             <a href="{% url 'profil_candidat' %}" class="nav-link">Mon profil</a>
-            <a href="#" class="nav-link">Mes candidatures</a>
+            <a href="{% url 'mes_candidatures' %}" class="nav-link">Mes candidatures</a>
             <a href="{% url 'offres_dispo' %}" class="nav-link active">Offres disponibles</a>
         </nav>
 
@@ -75,10 +75,13 @@
 
                         <div class="offer-footer">
                             <span class="status-pill">Disponible</span>
-
-                            <a href="#" class="apply-btn">
-                                Postuler
-                            </a>
+                            {% if offre.id in candidatures_offres_ids %}
+                                <span class="apply-btn apply-btn-disabled">Déjà postulé</span>
+                            {% else %}
+                                <a href="{% url 'postuler_offre' offre.id %}" class="apply-btn">
+                                    Postuler
+                                </a>
+                            {% endif %}
                         </div>
 
                     </div>

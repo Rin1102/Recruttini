@@ -64,3 +64,33 @@ class Offre(models.Model):
 
     def __str__(self):
         return self.titre
+
+
+class Candidature(models.Model):
+    STATUS_CHOICES = [
+        ('en_attente', 'En attente'),
+        ('acceptee', 'Acceptée'),
+        ('rejetee', 'Rejetée'),
+    ]
+
+    offre = models.ForeignKey(Offre, on_delete=models.CASCADE, related_name='candidatures')
+    candidat = models.ForeignKey(Candidat, on_delete=models.CASCADE, related_name='candidatures')
+
+    nom = models.CharField(max_length=100)
+    prenom = models.CharField(max_length=100)
+    email = models.EmailField()
+    telephone = models.CharField(max_length=20)
+    ville = models.CharField(max_length=100)
+
+    github_link = models.URLField(blank=True)
+    cv = models.FileField(upload_to='candidatures/cv/')
+
+    statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='en_attente')
+    date_soumission = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('offre', 'candidat')
+        ordering = ['-date_soumission']
+
+    def __str__(self):
+        return f"{self.prenom} {self.nom} - {self.offre.titre}"
