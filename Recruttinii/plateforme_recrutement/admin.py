@@ -32,6 +32,13 @@ class OffreAdmin(admin.ModelAdmin):
 
 @admin.register(Candidature)
 class CandidatureAdmin(admin.ModelAdmin):
-	list_display = ('offre', 'candidat', 'email', 'telephone', 'statut', 'date_soumission')
-	search_fields = ('offre__titre', 'candidat__user__username', 'nom', 'prenom', 'email', 'telephone')
-	list_filter = ('statut', 'date_soumission')
+	list_display = (
+		'offre', 'candidat', 'email', 'telephone', 'statut',
+		'entretien_date', 'entretien_heure', 'entretien_type', 'entretien_lieu',
+		'date_soumission'
+	)
+	search_fields = (
+		'offre__titre', 'candidat__user__username', 'nom', 'prenom', 'email', 'telephone',
+		'entretien_lieu', 'entretien_message'
+	)
+	list_filter = ('statut', 'entretien_type', 'entretien_date', 'date_soumission')

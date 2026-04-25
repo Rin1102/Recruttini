@@ -419,3 +419,28 @@ def entretiens_recruteur(request):
         'recruteur': recruteur,
         'entretiens': entretiens,
     })
+
+
+@login_required
+def mes_entretiens_candidat(request):
+    candidat = get_object_or_404(Candidat, user=request.user)
+    today = timezone.localdate()
+    entretiens = (
+        Candidature.objects
+        .select_related('offre', 'offre__recruteur')
+        .filter(
+            candidat=candidat,
+            statut='acceptee',
+            entretien_date__gte=today,
+            entretien_heure__isnull=False,
+            entretien_type__in=['hybrid', 'onsite'],
+            entretien_lieu__gt='',
+            entretien_message__gt='',
+        )
+        .order_by('entretien_date', 'entretien_heure')
+    )
+
+    return render(request, 'plateforme/mes_entretiens_candidat.html', {
+        'candidat': candidat,
+        'entretiens': entretiens,
+    })

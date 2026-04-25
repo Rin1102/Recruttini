@@ -22,8 +22,9 @@
 
         <nav class="sidebar-nav">
             <a href="{% url 'profil_candidat' %}" class="nav-link">Mon profil</a>
-            <a href="{% url 'mes_candidatures' %}" class="nav-link active">Mes candidatures</a>
             <a href="{% url 'offres_dispo' %}" class="nav-link">Offres disponibles</a>
+            <a href="{% url 'mes_candidatures' %}" class="nav-link active">Mes candidatures</a>
+            <a href="{% url 'mes_entretiens_candidat' %}" class="nav-link">Mes entretiens à venir</a>
         </nav>
 
         <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
@@ -59,6 +60,21 @@
                             {% endif %}
                             <a href="{{ candidature.cv.url }}" target="_blank" rel="noopener">Voir CV</a>
                         </div>
+
+                        {% if candidature.statut == 'acceptee' and candidature.entretien_date and candidature.entretien_heure and candidature.entretien_lieu and candidature.entretien_message %}
+                            <div class="congrats-banner">
+                                🎉 Félicitations ! Votre candidature a été acceptée.
+                            </div>
+                        {% elif candidature.statut == 'rejetee' %}
+                            <div class="rejection-banner">
+                                Candidature rejetée. Vous pouvez repostuler à cette offre.
+                            </div>
+                            <div class="action-row">
+                                <a href="{% url 'postuler_offre' candidature.offre.id %}" class="btn-link">
+                                    Repostuler
+                                </a>
+                            </div>
+                        {% endif %}
                     </article>
                 {% endfor %}
             {% else %}

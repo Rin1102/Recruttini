@@ -163,6 +163,26 @@
     font-size: 0.9rem;
 }
 
+.congrats-banner {
+    margin-top: 14px;
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 700;
+}
+
+.rejection-banner {
+    margin-top: 14px;
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 700;
+}
+
 .interview-details {
     margin-top: 14px;
     border: 1px solid #dbeafe;
