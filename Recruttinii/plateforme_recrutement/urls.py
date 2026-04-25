@@ -16,5 +16,6 @@ urlpatterns = [
     path('offres-disponibles/<int:offre_id>/postuler/', views.postuler_offre, name='postuler_offre'),
     path('mes-candidatures/', views.mes_candidatures, name='mes_candidatures'),
     path('suivi-candidatures/', views.suivi_candidatures, name='suivi_candidatures'),
+    path('entretiens/', views.entretiens_recruteur, name='entretiens_recruteur'),
     path('suivi-candidatures/<int:candidature_id>/statut/', views.changer_statut_candidature, name='changer_statut_candidature'),
 ]

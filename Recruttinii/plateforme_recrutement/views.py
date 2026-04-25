@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.utils import timezone
 from .models import Recruteur, Offre, Candidat, UserProfil, Candidature
 from .forms import (
     InscriptionForm,
@@ -14,6 +15,7 @@ from .forms import (
     CandidatProfileForm,
     OffreForm,
     CandidatureForm,
+    EntretienForm,
 )
 import unicodedata
 
@@ -261,7 +263,9 @@ def offres_dispo(request):
     q = request.GET.get('q', '').strip()
 
     offres = Offre.objects.select_related('recruteur', 'recruteur__user').all().order_by('-date_publication', '-id')
-    candidatures_offres_ids = set(candidat.candidatures.values_list('offre_id', flat=True))
+    candidatures_en_attente_offres_ids = set(
+        candidat.candidatures.filter(statut='en_attente').values_list('offre_id', flat=True)
+    )
 
     if q:
         offres = offres.filter(
@@ -274,7 +278,7 @@ def offres_dispo(request):
         'candidat': candidat,
         'offres': offres,
         'q': q,
-        'candidatures_offres_ids': candidatures_offres_ids,
+        'candidatures_en_attente_offres_ids': candidatures_en_attente_offres_ids,
     })
 
 
@@ -283,9 +287,13 @@ def postuler_offre(request, offre_id):
     candidat = get_object_or_404(Candidat, user=request.user)
     offre = get_object_or_404(Offre.objects.select_related('recruteur'), id=offre_id)
 
-    candidature_existante = Candidature.objects.filter(offre=offre, candidat=candidat).first()
+    candidature_existante = Candidature.objects.filter(
+        offre=offre,
+        candidat=candidat,
+        statut='en_attente',
+    ).first()
     if candidature_existante:
-        messages.info(request, "Vous avez déjà postulé à cette offre.")
+        messages.info(request, "Vous avez déjà une candidature en attente pour cette offre.")
         return redirect('mes_candidatures')
 
     initial_data = {
@@ -335,7 +343,7 @@ def suivi_candidatures(request):
     candidatures = (
         Candidature.objects
         .select_related('offre', 'candidat', 'candidat__user')
-        .filter(offre__recruteur=recruteur)
+        .filter(offre__recruteur=recruteur, statut='en_attente')
         .order_by('-date_soumission')
     )
 
@@ -356,13 +364,58 @@ def changer_statut_candidature(request, candidature_id):
 
     if request.method == 'POST':
         action = request.POST.get('action')
-        if action == 'accepter':
-            candidature.statut = 'acceptee'
-            candidature.save(update_fields=['statut'])
-            messages.success(request, "La candidature a été acceptée.")
-        elif action == 'rejeter':
+        if action == 'rejeter':
             candidature.statut = 'rejetee'
             candidature.save(update_fields=['statut'])
             messages.success(request, "La candidature a été rejetée.")
+            return redirect('suivi_candidatures')
 
-    return redirect('suivi_candidatures')
+        form = EntretienForm(request.POST, instance=candidature)
+        if form.is_valid():
+            candidature = form.save(commit=False)
+            candidature.statut = 'acceptee'
+            candidature.save()
+            messages.success(request, "Candidature acceptée et entretien planifié.")
+            return redirect('suivi_candidatures')
+
+        return render(request, 'plateforme/entretien_form.html', {
+            'recruteur': recruteur,
+            'candidature': candidature,
+            'form': form,
+        })
+
+    if candidature.statut != 'en_attente':
+        messages.info(request, "Cette candidature n'est plus en attente.")
+        return redirect('suivi_candidatures')
+
+    form = EntretienForm(instance=candidature)
+    return render(request, 'plateforme/entretien_form.html', {
+        'recruteur': recruteur,
+        'candidature': candidature,
+        'form': form,
+    })
+
+
+@login_required
+def entretiens_recruteur(request):
+    recruteur = get_object_or_404(Recruteur, user=request.user)
+    today = timezone.localdate()
+    entretiens = (
+        Candidature.objects
+        .select_related('offre', 'candidat', 'candidat__user')
+        .filter(
+            offre__recruteur=recruteur,
+            statut='acceptee',
+            entretien_date__gte=today,
+            entretien_heure__isnull=False,
+            entretien_type__in=['hybrid', 'onsite'],
+            entretien_lieu__gt='',
+            entretien_message__gt='',
+        )
+        .order_by('entretien_date', 'entretien_heure')
+    )
+
+    return render(request, 'plateforme/entretiens_recruteur.html', {
+        'recruteur': recruteur,
+        'entretiens': entretiens,
+    })

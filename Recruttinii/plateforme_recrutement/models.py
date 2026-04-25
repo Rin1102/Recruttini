@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
 
 ROLE_CHOICES=[
@@ -72,6 +73,10 @@ class Candidature(models.Model):
         ('acceptee', 'Acceptée'),
         ('rejetee', 'Rejetée'),
     ]
+    ENTRETIEN_TYPE_CHOICES = [
+        ('hybrid', 'Hybride'),
+        ('onsite', 'Sur site'),
+    ]
 
     offre = models.ForeignKey(Offre, on_delete=models.CASCADE, related_name='candidatures')
     candidat = models.ForeignKey(Candidat, on_delete=models.CASCADE, related_name='candidatures')
@@ -86,10 +91,21 @@ class Candidature(models.Model):
     cv = models.FileField(upload_to='candidatures/cv/')
 
     statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='en_attente')
+    entretien_date = models.DateField(null=True, blank=True)
+    entretien_heure = models.TimeField(null=True, blank=True)
+    entretien_type = models.CharField(max_length=20, choices=ENTRETIEN_TYPE_CHOICES, blank=True, default='')
+    entretien_lieu = models.CharField(max_length=255, blank=True, default='')
+    entretien_message = models.TextField(blank=True, default='')
     date_soumission = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('offre', 'candidat')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['offre', 'candidat'],
+                condition=Q(statut='en_attente'),
+                name='unique_pending_candidature_per_offre_candidat',
+            )
+        ]
         ordering = ['-date_soumission']
 
     def __str__(self):

@@ -24,6 +24,7 @@
             <a href="{% url 'profil_recruteur' %}" class="nav-link">Mon profil</a>
             <a href="{% url 'mes_offres' %}" class="nav-link">Mes offres</a>
             <a href="{% url 'suivi_candidatures' %}" class="nav-link active">Suivi des candidatures</a>
+            <a href="{% url 'entretiens_recruteur' %}" class="nav-link">Entretiens</a>
         </nav>
 
         <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
@@ -65,13 +66,13 @@
                             <a href="{{ candidature.cv.url }}" target="_blank" rel="noopener">Voir CV</a>
                         </div>
 
-                        {% if candidature.statut == 'en_attente' %}
-                            <form method="POST" action="{% url 'changer_statut_candidature' candidature.id %}" class="action-row">
+                        <div class="action-row">
+                            <a href="{% url 'changer_statut_candidature' candidature.id %}" class="btn-link btn-accept-link">Accepter</a>
+                            <form method="POST" action="{% url 'changer_statut_candidature' candidature.id %}">
                                 {% csrf_token %}
-                                <button type="submit" name="action" value="accepter" class="btn-accept">Accepter</button>
                                 <button type="submit" name="action" value="rejeter" class="btn-reject">Rejeter</button>
                             </form>
-                        {% endif %}
+                        </div>
                     </article>
                 {% endfor %}
             {% else %}

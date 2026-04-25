@@ -75,8 +75,8 @@
 
                         <div class="offer-footer">
                             <span class="status-pill">Disponible</span>
-                            {% if offre.id in candidatures_offres_ids %}
-                                <span class="apply-btn apply-btn-disabled">Déjà postulé</span>
+                            {% if offre.id in candidatures_en_attente_offres_ids %}
+                                <span class="apply-btn apply-btn-disabled">Candidature en attente</span>
                             {% else %}
                                 <a href="{% url 'postuler_offre' offre.id %}" class="apply-btn">
                                     Postuler

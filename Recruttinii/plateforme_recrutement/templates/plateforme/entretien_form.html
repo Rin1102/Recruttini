@@ -1,0 +1,76 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planifier un entretien</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/profil_recruteur.css' %}">
+    <link rel="stylesheet" href="{% static 'css/candidatures.css' %}">
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div class="sidebar-head">
+            <h2>Espace recruteur</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'profil_recruteur' %}" class="nav-link">Mon profil</a>
+            <a href="{% url 'mes_offres' %}" class="nav-link">Mes offres</a>
+            <a href="{% url 'suivi_candidatures' %}" class="nav-link active">Suivi des candidatures</a>
+            <a href="{% url 'entretiens_recruteur' %}" class="nav-link">Entretiens</a>
+        </nav>
+
+        <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
+    </aside>
+
+    <main class="profile-panel">
+        <div class="top-bar">
+            <h2>Planifier un entretien</h2>
+        </div>
+
+        <div class="form-box candidature-box">
+            <div class="offer-resume">
+                <h3>{{ candidature.offre.titre }}</h3>
+                <p>{{ candidature.nom }} {{ candidature.prenom }} • {{ candidature.email }}</p>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="form-error">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="form-grid">
+                    <div class="field-card">{{ form.entretien_date.label_tag }} {{ form.entretien_date }}</div>
+                    <div class="field-card">{{ form.entretien_heure.label_tag }} {{ form.entretien_heure }}</div>
+                    <div class="field-card full">{{ form.entretien_type.label_tag }} {{ form.entretien_type }}</div>
+                    <div class="field-card full">{{ form.entretien_lieu.label_tag }} {{ form.entretien_lieu }}</div>
+                    <div class="field-card full">{{ form.entretien_message.label_tag }} {{ form.entretien_message }}</div>
+                </div>
+
+                <div class="inline-errors">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+
+                <div class="action-row">
+                    <button type="submit" class="btn-accept">Valider l'acceptation</button>
+                    <a href="{% url 'suivi_candidatures' %}" class="btn-link">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+</body>
+</html>

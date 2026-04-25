@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entretiens</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/profil_recruteur.css' %}">
+    <link rel="stylesheet" href="{% static 'css/candidatures.css' %}">
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div class="sidebar-head">
+            <h2>Espace recruteur</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'profil_recruteur' %}" class="nav-link">Mon profil</a>
+            <a href="{% url 'mes_offres' %}" class="nav-link">Mes offres</a>
+            <a href="{% url 'suivi_candidatures' %}" class="nav-link">Suivi des candidatures</a>
+            <a href="{% url 'entretiens_recruteur' %}" class="nav-link active">Entretiens</a>
+        </nav>
+
+        <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
+    </aside>
+
+    <main class="profile-panel">
+        <div class="top-bar">
+            <h2>Entretiens planifiés</h2>
+        </div>
+
+        <div class="list-wrapper">
+            {% if entretiens %}
+                {% for candidature in entretiens %}
+                    <article class="candidature-card">
+                        <div class="card-head">
+                            <div>
+                                <h3>{{ candidature.offre.titre }}</h3>
+                                <p>{{ candidature.nom }} {{ candidature.prenom }} • {{ candidature.email }}</p>
+                            </div>
+                            <span class="status-pill status-acceptee">Acceptée</span>
+                        </div>
+
+                        <div class="interview-details">
+                            <h4>Entretien planifié</h4>
+                            <p><strong>Date :</strong> {{ candidature.entretien_date|date:"d/m/Y" }}</p>
+                            <p><strong>Heure :</strong> {{ candidature.entretien_heure|time:"H:i" }}</p>
+                            <p><strong>Type :</strong> {{ candidature.get_entretien_type_display }}</p>
+                            <p><strong>Lieu :</strong> {{ candidature.entretien_lieu }}</p>
+                            <p><strong>Message :</strong> {{ candidature.entretien_message }}</p>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-box">
+                    <h3>Aucun entretien planifié</h3>
+                    <p>Les candidatures acceptées avec entretien apparaîtront ici.</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+</body>
+</html>

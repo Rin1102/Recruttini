@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.utils import timezone
 from .models import Recruteur, Offre, Candidat, Candidature
 import re
 
@@ -194,14 +195,18 @@ class CandidatureForm(forms.ModelForm):
             'telephone': 'Téléphone',
             'ville': 'Ville',
             'email': 'Email',
-            'github_link': 'Lien GitHub (optionnel)',
+            'github_link': 'Lien GitHub',
             'cv': 'CV (PDF, DOC, DOCX)',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cv'].required = True
 
     def clean_cv(self):
         cv = self.cleaned_data.get('cv')
         if not cv:
-            return cv
+            raise forms.ValidationError("Le CV est obligatoire.")
 
         allowed_extensions = ('.pdf', '.doc', '.docx')
         if not cv.name.lower().endswith(allowed_extensions):
@@ -211,4 +216,38 @@ class CandidatureForm(forms.ModelForm):
             raise forms.ValidationError("La taille maximale du CV est de 5 Mo.")
 
         return cv
+
+
+class EntretienForm(forms.ModelForm):
+    class Meta:
+        model = Candidature
+        fields = ['entretien_date', 'entretien_heure', 'entretien_type', 'entretien_lieu', 'entretien_message']
+        widgets = {
+            'entretien_date': forms.DateInput(attrs={'type': 'date'}),
+            'entretien_heure': forms.TimeInput(attrs={'type': 'time'}),
+            'entretien_type': forms.Select(),
+            'entretien_lieu': forms.TextInput(attrs={'placeholder': 'Lieu de l\'entretien'}),
+            'entretien_message': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Message personnalisé au candidat'}),
+        }
+        labels = {
+            'entretien_date': "Date de l'entretien",
+            'entretien_heure': "Heure de l'entretien",
+            'entretien_type': "Type (Hybride ou Sur site)",
+            'entretien_lieu': "Lieu de l'entretien",
+            'entretien_message': "Message au candidat",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['entretien_date'].required = True
+        self.fields['entretien_heure'].required = True
+        self.fields['entretien_type'].required = True
+        self.fields['entretien_lieu'].required = True
+        self.fields['entretien_message'].required = True
+
+    def clean_entretien_date(self):
+        entretien_date = self.cleaned_data.get('entretien_date')
+        if entretien_date and entretien_date < timezone.localdate():
+            raise forms.ValidationError("La date doit être aujourd'hui ou une date future.")
+        return entretien_date
 

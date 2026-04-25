@@ -105,6 +105,18 @@
     background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
 }
 
+.btn-accept-link {
+    background: #16a34a;
+    border: 1px solid #16a34a;
+    color: #ffffff;
+}
+
+.btn-accept-link:hover {
+    background: #15803d;
+    border-color: #15803d;
+    color: #ffffff;
+}
+
 .btn-accept {
     background: #16a34a;
     border-color: #16a34a;
@@ -149,6 +161,24 @@
     color: #b91c1c;
     margin: 8px 0 0;
     font-size: 0.9rem;
+}
+
+.interview-details {
+    margin-top: 14px;
+    border: 1px solid #dbeafe;
+    background: #f8fbff;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.interview-details h4 {
+    margin: 0 0 8px;
+    color: #1e3a8a;
+}
+
+.interview-details p {
+    margin: 6px 0;
+    color: #1f2937;
 }
 
 @media (max-width: 860px) {
