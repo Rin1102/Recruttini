@@ -1,0 +1,258 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Mes offres</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/mes_offres.css' %}">
+</head>
+<body>
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Supprimer l'offre</h2>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer l'offre <strong id="offerTitle"></strong> ?</p>
+                <p class="modal-warning">Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" onclick="closeDeleteModal()">Annuler</button>
+                <button class="btn btn-delete" onclick="confirmDelete()">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-head">
+                <h2>Espace recruteur</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{% url 'profil_recruteur' %}" class="nav-link">Mon profil</a>
+                <a href="{% url 'mes_offres' %}" class="nav-link active">Mes offres</a>
+                <a href="#" class="nav-link">Suivi des candidature</a>
+            </nav>
+            <a href="{% url 'deconnexion' %}" class="sidebar-logout">Se déconnecter</a>
+        </aside>
+
+        <main class="panel">
+            <div class="top-bar">
+                <div>
+                    <h1>Mes offres</h1>
+                    <p>Gérez toutes vos offres publiées</p>
+                </div>
+                <a href="{% url 'creer_offre' %}" class="btn btn-primary">+ Publier une offre</a>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <span class="stat-value">{{ total_offres }}</span>
+                    <span class="stat-label">Total offres</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">{{ offres_filtrees }}</span>
+                    <span class="stat-label">Résultats de recherche</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">{{ recruteur.entreprise }}</span>
+                    <span class="stat-label">Entreprise</span>
+                </div>
+            </div>
+
+            <form method="get" class="search-form" id="search-form">
+                <input type="text" name="q" id="search-input" value="{{ q }}" placeholder="Rechercher par titre du poste..." autocomplete="off">
+                <button class="btn btn-secondary" type="submit">Rechercher</button>
+                {% if q %}
+                    <a href="{% url 'mes_offres' %}" class="btn btn-light">Effacer</a>
+                {% endif %}
+            </form>
+
+            {% if q %}
+                <p class="search-info"><strong>{{ offres_filtrees }}</strong> résultat{{ offres_filtrees|pluralize }} pour le titre "{{ q }}"</p>
+            {% endif %}
+
+            {% if offres %}
+                <div class="offers-list">
+                    {% for offre in offres %}
+                        <article class="offer-card">
+                            <div class="offer-main">
+                                <h3>{{ offre.titre }}</h3>
+                                <div class="offer-meta">{{ offre.lieu }} · {{ offre.type_contrat }}{% if offre.salaire %} · {{ offre.salaire }}{% endif %}</div>
+                                <p>{{ offre.description|truncatechars:160 }}</p>
+                                <span class="offer-date">Publié le {{ offre.date_publication|date:'d/m/Y' }}{% if offre.date_limite %} · Limite: {{ offre.date_limite|date:'d/m/Y' }}{% endif %}</span>
+                            </div>
+                            <div class="offer-actions">
+                                <a class="btn btn-edit" href="{% url 'modifier_offre' offre.id %}">Modifier</a>
+                                <button class="btn btn-delete" data-offre-id="{{ offre.id }}" data-offre-title="{{ offre.titre }}">Supprimer</button>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    {% if q %}
+                        <h3>Aucune offre trouvée</h3>
+                        <p>Aucun résultat pour "{{ q }}".</p>
+                    {% else %}
+                        <h3>Vous n'avez pas encore publié d'offre</h3>
+                        <p>Commencez avec votre première annonce.</p>
+                        <a href="{% url 'creer_offre' %}" class="btn btn-primary">Créer une offre</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            const form = document.getElementById('search-form');
+            const input = document.getElementById('search-input');
+
+            if (!form || !input) return;
+
+            let timer = null;
+            input.addEventListener('input', function () {
+                window.clearTimeout(timer);
+                timer = window.setTimeout(function () {
+                    // Use AJAX to avoid page reload and keep cursor in input
+                    const searchQuery = input.value;
+                    const url = new URL(window.location);
+                    url.searchParams.set('q', searchQuery);
+                    
+                    fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        // Parse the response and update only the relevant parts
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Update the offers list
+                        const newOffers = doc.querySelector('.offers-list') || doc.querySelector('.empty-state');
+                        const oldOffers = document.querySelector('.offers-list') || document.querySelector('.empty-state');
+                        if (newOffers && oldOffers) {
+                            oldOffers.replaceWith(newOffers);
+                        }
+                        
+                        // Update the stats row
+                        const newStats = doc.querySelector('.stats-row');
+                        const oldStats = document.querySelector('.stats-row');
+                        if (newStats && oldStats) {
+                            oldStats.replaceWith(newStats);
+                        }
+                        
+                        // Update the search info
+                        const newInfo = doc.querySelector('.search-info');
+                        const oldInfo = document.querySelector('.search-info');
+                        if (newInfo && oldInfo) {
+                            oldInfo.replaceWith(newInfo);
+                        } else if (newInfo && !oldInfo) {
+                            form.insertAdjacentElement('afterend', newInfo);
+                        } else if (!newInfo && oldInfo) {
+                            oldInfo.remove();
+                        }
+                        
+                        // Update the URL without reloading
+                        window.history.replaceState({}, '', url);
+                        
+                        // Keep cursor in the input field
+                        input.focus();
+                    })
+                    .catch(error => console.error('Search error:', error));
+                }, 250);
+            });
+        })();
+    </script>
+
+    <script>
+        let deleteOfferId = null;
+
+        function openDeleteModal(offerId, offerTitle) {
+            deleteOfferId = offerId;
+            document.getElementById('offerTitle').textContent = offerTitle || '';
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function sanitizeLegacyDeleteForms() {
+            document.querySelectorAll('form.inline-delete-form[onsubmit]').forEach(function (form) {
+                form.removeAttribute('onsubmit');
+            });
+        }
+
+        function closeDeleteModal() {
+            deleteOfferId = null;
+            document.getElementById('deleteModal').classList.remove('show');
+        }
+
+        function confirmDelete() {
+            if (deleteOfferId) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/offres/${deleteOfferId}/supprimer/`;
+                
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'csrfmiddlewaretoken';
+                input.value = csrfToken;
+                form.appendChild(input);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+            closeDeleteModal();
+        }
+
+        sanitizeLegacyDeleteForms();
+
+        // Add event listener to all delete buttons
+        document.addEventListener('click', function(event) {
+            const deleteBtn = event.target.closest('.btn-delete[data-offre-id]');
+            if (deleteBtn) {
+                const offerId = deleteBtn.getAttribute('data-offre-id');
+                const offerTitle = deleteBtn.getAttribute('data-offre-title');
+                openDeleteModal(offerId, offerTitle);
+                return;
+            }
+
+            const legacyDeleteButton = event.target.closest('form.inline-delete-form .btn-delete');
+            if (legacyDeleteButton) {
+                event.preventDefault();
+                const legacyForm = legacyDeleteButton.closest('form.inline-delete-form');
+                const action = legacyForm ? legacyForm.getAttribute('action') : '';
+                const match = action ? action.match(/\/offres\/(\d+)\/supprimer\//) : null;
+                const offerId = match ? match[1] : null;
+                const card = legacyDeleteButton.closest('.offer-card');
+                const offerTitle = card ? card.querySelector('h3')?.textContent?.trim() : '';
+                if (offerId) {
+                    openDeleteModal(offerId, offerTitle);
+                }
+                return;
+            }
+
+            const modal = document.getElementById('deleteModal');
+            if (event.target === modal) {
+                closeDeleteModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeDeleteModal();
+            }
+        });
+    </script>
+</body>
+</html>
