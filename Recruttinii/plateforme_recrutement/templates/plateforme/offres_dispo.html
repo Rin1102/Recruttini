@@ -70,9 +70,26 @@
                             </span>
                         </div>
 
-                        <p class="offer-description">
-                            {{ offre.description|truncatewords:35 }}
-                        </p>
+                        <div class="offer-description">
+                            <p class="desc-trunc">{{ offre.description|truncatewords:35 }}</p>
+                            <div class="desc-full" style="display:none">
+                                <p>{{ offre.description }}</p>
+                                <p><strong>Lieu :</strong> {{ offre.lieu|default:"Non précisé" }}</p>
+                                <p><strong>Type de contrat :</strong> {{ offre.type_contrat|default:"Non précisé" }}</p>
+                                {% if offre.salaire %}
+                                    <p><strong>Salaire :</strong> {{ offre.salaire }}</p>
+                                {% endif %}
+                                {% if offre.competences %}
+                                    <p><strong>Compétences requises :</strong> {{ offre.competences }}</p>
+                                {% endif %}
+                                {% if offre.date_limite %}
+                                    <p><strong>Date limite :</strong> {{ offre.date_limite|date:"d/m/Y" }}</p>
+                                {% endif %}
+                            </div>
+                            {% if offre.description|length > 250 or offre.lieu or offre.type_contrat or offre.salaire or offre.competences or offre.date_limite %}
+                                <a href="#" class="desc-toggle" style="color:#0d6efd;text-decoration:underline;cursor:pointer;">Voir plus</a>
+                            {% endif %}
+                        </div>
 
                         <div class="offer-footer">
                             <span class="status-pill">Disponible</span>
@@ -99,6 +116,31 @@
     </main>
 
 </div>
+
+<script>
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.desc-toggle');
+    if (!btn) return;
+    e.preventDefault();
+    const desc = btn.closest('.offer-card')?.querySelector('.offer-description') || btn.closest('.offer-description');
+    if (!desc) return;
+    const trunc = desc.querySelector('.desc-trunc');
+    const full = desc.querySelector('.desc-full');
+    if (!trunc || !full) return;
+    const isExpanded = desc.dataset.expanded === '1';
+    if (!isExpanded) {
+        trunc.style.display = 'none';
+        full.style.display = '';
+        desc.dataset.expanded = '1';
+        btn.textContent = 'Voir moins';
+    } else {
+        trunc.style.display = '';
+        full.style.display = 'none';
+        desc.dataset.expanded = '0';
+        btn.textContent = 'Voir plus';
+    }
+});
+</script>
 
 </body>
 </html>

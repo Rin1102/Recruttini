@@ -45,7 +45,7 @@ class InscriptionForm(forms.Form):
             raise forms.ValidationError("Cet email est déjà utilisé.")
         return email
 
-    def clean_password(self):                                       # ✅ bien dans la classe
+    def clean_password(self):                                       
         password = self.cleaned_data['password']
         if len(password) < 8:
             raise forms.ValidationError("Minimum 8 caractères.")
